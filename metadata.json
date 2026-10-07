@@ -1,0 +1,6 @@
+{
+  "name": "LingoBangla",
+  "description": "বাংলা থেকে যেকোনো ভাষা শেখার প্ল্যাটফর্ম — মালয়ালম, ইংরেজি, হিন্দি ও অন্যান্য ভাষা। অডিও উচ্চারণ, কথা বলার অনুশীলন ও কুইজ।",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

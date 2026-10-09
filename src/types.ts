@@ -41,10 +41,12 @@ export interface VocabularyWord {
   word: string;
   banglish: string;
   bangla: string;
+  banglaPronunciation?: string;
   category: string;
   exampleSentence?: string;
   exampleBanglish?: string;
   exampleBangla?: string;
+  exampleBanglaPronunciation?: string;
   level?: number;
 }
 
@@ -54,11 +56,13 @@ export interface SentenceItem {
   target: string;
   banglish: string;
   bangla: string;
+  banglaPronunciation?: string;
   category: string;
   words?: {
     target: string;
     banglish: string;
     bangla: string;
+    banglaPronunciation?: string;
   }[];
 }
 
@@ -67,6 +71,7 @@ export interface AlphabetItem {
   letter: string;
   sound: string;
   banglish: string;
+  banglaPronunciation?: string;
   banglaExplanation: string;
   exampleWord: string;
   exampleBanglish: string;
@@ -142,10 +147,12 @@ export interface ConversationLine {
   text: string;
   banglish: string;
   bangla: string;
+  banglaPronunciation?: string;
   words?: {
     target: string;
     banglish: string;
     bangla: string;
+    banglaPronunciation?: string;
   }[];
 }
 

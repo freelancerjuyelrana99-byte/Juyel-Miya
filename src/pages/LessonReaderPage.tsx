@@ -14,6 +14,7 @@ import confetti from 'canvas-confetti';
 import { CourseLesson, CourseLevel, LanguageMetadata, UserProgress, VoiceSettings } from '../types';
 import { AudioButton } from '../components/AudioButton';
 import { WordByWordSentence } from '../components/WordByWordModal';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 import { NavPage } from '../components/Navbar';
 
 interface LessonReaderPageProps {
@@ -155,11 +156,16 @@ export const LessonReaderPage: React.FC<LessonReaderPageProps> = ({
                       <span className="text-xl font-bold text-slate-900 block font-malayalam">
                         {v.word}
                       </span>
-                      <span className="text-xs text-slate-500 font-sans block mt-0.5">
-                        উচ্চারণ: {v.banglish}
-                      </span>
-                      <span className="text-sm font-medium text-emerald-800 font-bangla block mt-1">
-                        অর্থ: {v.bangla}
+                      <div className="space-y-0.5 mt-1">
+                        <span className="text-xs font-bold text-slate-800 font-bangla block">
+                          🇧🇩 উচ্চারণ: {v.banglaPronunciation || getMalayalamBanglaPronunciation(v.word)}
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-mono block">
+                          🔤 English: {v.banglish}
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold text-emerald-800 font-bangla block mt-1">
+                        💡 অর্থ: {v.bangla}
                       </span>
                     </div>
                     <AudioButton
@@ -204,11 +210,19 @@ export const LessonReaderPage: React.FC<LessonReaderPageProps> = ({
                   key={sentence.id}
                   className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-200/90 space-y-3"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs text-slate-500 font-sans">
-                      উচ্চারণ: <span className="font-semibold text-slate-700">{sentence.banglish}</span>
-                    </p>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-slate-800 font-bangla">
+                        🇧🇩 বাংলা উচ্চারণ:{' '}
+                        <span className="text-emerald-900 font-extrabold">
+                          {sentence.banglaPronunciation || getMalayalamBanglaPronunciation(sentence.target)}
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono">
+                        🔤 English: <span className="font-semibold text-slate-700">{sentence.banglish}</span>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                       <AudioButton
                         text={sentence.target}
                         locale={language.voiceCode}

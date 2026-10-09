@@ -1,0 +1,171 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and language learning progress metadata",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The Firebase Auth user ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Profile picture URL"
+        },
+        "selectedLanguage": {
+          "type": "string",
+          "description": "Currently selected target language"
+        },
+        "streak": {
+          "type": "number",
+          "description": "Consecutive days study streak"
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "Last active date in YYYY-MM-DD"
+        },
+        "wordsLearned": {
+          "type": "array",
+          "description": "List of learned vocabulary IDs"
+        },
+        "completedLessons": {
+          "type": "array",
+          "description": "List of completed lesson IDs"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Profile last updated timestamp"
+        }
+      },
+      "required": ["userId", "selectedLanguage"]
+    },
+    "UserQuiz": {
+      "title": "UserQuiz",
+      "description": "Record of a completed quiz session",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Quiz attempt ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID of the learner"
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Identifier of the quiz"
+        },
+        "score": {
+          "type": "number",
+          "description": "Score achieved"
+        },
+        "total": {
+          "type": "number",
+          "description": "Total possible questions"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of quiz completion"
+        }
+      },
+      "required": ["userId", "quizId", "score", "total"]
+    },
+    "UserNote": {
+      "title": "UserNote",
+      "description": "Learner custom study notes",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Note identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of note"
+        },
+        "content": {
+          "type": "string",
+          "description": "Note contents"
+        },
+        "languageId": {
+          "type": "string",
+          "description": "Target language for the note"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["userId", "title", "content", "languageId"]
+    },
+    "UserFavorite": {
+      "title": "UserFavorite",
+      "description": "Saved favorite word or phrase",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique favorite ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who favorited this item"
+        },
+        "itemId": {
+          "type": "string",
+          "description": "ID of vocabulary word or sentence"
+        },
+        "languageId": {
+          "type": "string",
+          "description": "Language code"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When item was added"
+        }
+      },
+      "required": ["userId", "itemId", "languageId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data and streak"
+    },
+    "/users/{userId}/quizzes/{quizAttemptId}": {
+      "schema": "UserQuiz",
+      "description": "Quizzes completed by the user"
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": "UserNote",
+      "description": "Personal learning notes for the user"
+    },
+    "/users/{userId}/favorites/{favId}": {
+      "schema": "UserFavorite",
+      "description": "Saved favorite words for the user"
+    }
+  }
+}

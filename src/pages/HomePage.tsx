@@ -12,6 +12,7 @@ import {
   Compass,
   Headphones,
   FileText,
+  Bot,
 } from 'lucide-react';
 import { LanguageMetadata, UserProgress, VoiceSettings } from '../types';
 import { BASE_LANGUAGES } from '../data/languages';
@@ -128,26 +129,37 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </p>
               </div>
 
-              {/* Sample audio snippet */}
-              <div className="p-3.5 bg-white/10 backdrop-blur-xs rounded-2xl border border-white/10 flex items-center justify-between gap-4">
-                <div>
-                  <span className="text-lg font-bold font-malayalam block">
-                    നമസ്കാരം, സുഖമാണോ?
+              {/* Sample audio snippet with dual pronunciation */}
+              <div className="p-4 bg-white/10 backdrop-blur-xs rounded-2xl border border-white/10 space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <span className="text-xl font-black font-malayalam block text-white">
+                      നമസ്കാരം, സുഖമാണോ?
+                    </span>
+                  </div>
+                  <AudioButton
+                    text="നമസ്കാരം, സുഖമാണോ?"
+                    locale="ml-IN"
+                    settings={voiceSettings}
+                    size="md"
+                    className="bg-white text-emerald-900 hover:bg-emerald-50 shadow-md shrink-0"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="bg-emerald-500/30 text-emerald-100 px-2 py-0.5 rounded-md font-bold">
+                    🇧🇩 বাংলা উচ্চারণ: নমস্কারম্, সুখমাণো?
                   </span>
-                  <span className="text-xs text-emerald-200">
-                    Namaskaaram, sukhamaano? (নমস্কার, কেমন আছেন?)
+                  <span className="bg-white/15 text-emerald-200 px-2 py-0.5 rounded-md font-mono">
+                    🔤 English: Namaskaaram, sukhamaano?
                   </span>
                 </div>
-                <AudioButton
-                  text="നമസ്കാരം, സുഖമാണോ?"
-                  locale="ml-IN"
-                  settings={voiceSettings}
-                  size="md"
-                  className="bg-white text-emerald-900 hover:bg-emerald-50 shadow-md"
-                />
+                <p className="text-xs text-emerald-100 font-bangla">
+                  💡 অর্থ: নমস্কার, কেমন আছেন? / ভালো আছেন কি?
+                </p>
               </div>
 
-              <div className="pt-2 flex flex-wrap gap-3">
+              <div className="pt-2 flex flex-wrap gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -161,13 +173,21 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </button>
                 <button
                   type="button"
+                  onClick={() => onNavigate('chatbot')}
+                  className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <Bot className="w-4 h-4" />
+                  <span>🌴 কেরালা ভয়েজ চ্যাটবট</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     onSelectLanguage(malayalamLang);
                     onNavigate('alphabet');
                   }}
-                  className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl text-xs border border-white/20 transition-all cursor-pointer"
+                  className="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl text-xs border border-white/20 transition-all cursor-pointer"
                 >
-                  বর্ণমালা এক্সপ্লোর (അ, ആ...)
+                  বর্ণমালা (അ, ആ...)
                 </button>
               </div>
             </div>

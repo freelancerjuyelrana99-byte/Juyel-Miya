@@ -16,6 +16,7 @@ import { GrammarPage } from './pages/GrammarPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { NotesAndSavedPage } from './pages/NotesAndSavedPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { KeralaChatbotPage } from './pages/KeralaChatbotPage';
 import { VoiceSettingsModal } from './components/VoiceSettingsModal';
 import { AITutorModal } from './components/AITutorModal';
 import { DailyLessonModal } from './components/DailyLessonModal';
@@ -36,12 +37,39 @@ import {
   saveVoiceSettings,
 } from './services/storageService';
 import { getCourseLevelsForLanguage } from './data';
-import { Sparkles, Flame } from 'lucide-react';
+import { Sparkles, Flame, Bot } from 'lucide-react';
+import { User, onAuthStateChanged } from 'firebase/auth';
+import {
+  auth,
+  signInWithGoogle,
+  logOut,
+  syncUserData,
+  saveCloudNote,
+  deleteCloudNote,
+} from './services/firebase';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<NavPage>('home');
   const [progress, setProgress] = useState<UserProgress>(() => loadUserProgress('malayalam'));
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>(() => loadVoiceSettings());
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Listen to Firebase Auth state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        try {
+          const synced = await syncUserData(user, progress);
+          setProgress(synced);
+          saveUserProgress(synced);
+        } catch (e) {
+          console.error('Error syncing user data on sign in:', e);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const currentLanguage: LanguageMetadata = getLanguageById(progress.selectedLanguage || 'malayalam');
 
@@ -147,6 +175,11 @@ export default function App() {
       ...prev,
       notes: [note, ...prev.notes.filter((n) => n.id !== note.id)],
     }));
+    if (currentUser) {
+      saveCloudNote(currentUser.uid, note).catch((e) =>
+        console.warn('Cloud note save error:', e)
+      );
+    }
   };
 
   const handleDeleteNote = (id: string) => {
@@ -154,6 +187,11 @@ export default function App() {
       ...prev,
       notes: prev.notes.filter((n) => n.id !== id),
     }));
+    if (currentUser) {
+      deleteCloudNote(currentUser.uid, id).catch((e) =>
+        console.warn('Cloud note delete error:', e)
+      );
+    }
   };
 
   const handleResetProgress = () => {
@@ -204,6 +242,9 @@ export default function App() {
         currentLanguage={currentLanguage}
         onOpenVoiceSettings={() => setIsVoiceSettingsOpen(true)}
         onOpenAITutor={() => setIsAITutorOpen(true)}
+        currentUser={currentUser}
+        onSignInGoogle={signInWithGoogle}
+        onSignOut={logOut}
       />
 
       {/* Floating Daily Lesson Quick Action Bar */}
@@ -371,7 +412,33 @@ export default function App() {
             onResetProgress={handleResetProgress}
           />
         )}
+
+        {currentPage === 'chatbot' && (
+          <KeralaChatbotPage voiceSettings={voiceSettings} />
+        )}
       </main>
+
+      {/* Floating Action Button: Kerala Voice Chatbot */}
+      {currentPage !== 'chatbot' && (
+        <button
+          type="button"
+          onClick={() => {
+            setCurrentPage('chatbot');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-40 bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-800 hover:to-teal-900 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-full shadow-2xl flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95 border-2 border-white/30 group cursor-pointer"
+          title="কেরালা ভয়েজ চ্যাটবট (বাংলায় বলুন, মালয়ালমে শুনুন)"
+        >
+          <div className="relative">
+            <Bot className="w-5 h-5 text-amber-300" />
+            <span className="w-2.5 h-2.5 bg-rose-500 rounded-full absolute -top-1 -right-1 animate-ping" />
+            <span className="w-2.5 h-2.5 bg-rose-500 rounded-full absolute -top-1 -right-1" />
+          </div>
+          <span className="hidden sm:inline font-bold text-sm tracking-tight font-bangla">
+            কেরালা চ্যাটবট (ভয়েজ)
+          </span>
+        </button>
+      )}
 
       {/* Global Modals */}
       <VoiceSettingsModal
@@ -386,6 +453,7 @@ export default function App() {
         isOpen={isAITutorOpen}
         onClose={() => setIsAITutorOpen(false)}
         language={currentLanguage}
+        onOpenFullChatbot={() => setCurrentPage('chatbot')}
       />
 
       <DailyLessonModal

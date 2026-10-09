@@ -12,6 +12,7 @@ import { LanguageMetadata, UserProgress, VoiceSettings, VocabularyWord } from '.
 import { getVocabularyForLanguage } from '../data';
 import { MALAYALAM_CATEGORIES } from '../data/malayalam/vocabulary';
 import { AudioButton } from '../components/AudioButton';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface VocabularyPageProps {
   language: LanguageMetadata;
@@ -120,29 +121,51 @@ export const VocabularyPage: React.FC<VocabularyPageProps> = ({
                 </div>
 
                 {/* Target Script Word */}
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <span className="text-xl sm:text-2xl font-bold text-slate-900 block font-malayalam">
                     {item.word}
                   </span>
-                  <span className="text-xs text-slate-600 font-mono block">
-                    {item.banglish}
-                  </span>
-                  <p className="text-sm font-semibold text-emerald-800 font-bangla pt-1">
-                    {item.bangla}
+
+                  {/* Dual Pronunciation Box */}
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-1">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase shrink-0">
+                        🇧🇩 বাংলা উচ্চারণ:
+                      </span>
+                      <span className="text-xs font-bold text-slate-800 font-bangla">
+                        {item.banglaPronunciation || getMalayalamBanglaPronunciation(item.word)}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase shrink-0">
+                        🔤 English:
+                      </span>
+                      <span className="text-xs font-mono text-slate-600">
+                        {item.banglish}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm font-semibold text-emerald-900 font-bangla pt-0.5">
+                    💡 অর্থ: {item.bangla}
                   </p>
                 </div>
 
                 {/* Example sentence if available */}
                 {item.exampleSentence && (
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 text-xs">
-                    <p className="text-slate-700 font-medium font-malayalam">
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 text-xs space-y-1 bg-emerald-50/40 p-2 rounded-xl">
+                    <p className="text-slate-900 font-bold font-malayalam text-sm">
                       {item.exampleSentence}
                     </p>
-                    <p className="text-[11px] text-slate-600 font-sans mt-0.5">
-                      {item.exampleBanglish}
+                    <p className="text-[11px] text-emerald-950 font-bangla">
+                      <span className="font-semibold text-slate-500">উচ্চারণ (বাংলা):</span>{' '}
+                      {item.exampleBanglaPronunciation || getMalayalamBanglaPronunciation(item.exampleSentence)}
                     </p>
-                    <p className="text-[11px] text-slate-600 font-bangla mt-0.5">
-                      {item.exampleBangla}
+                    <p className="text-[11px] text-slate-600 font-mono">
+                      <span className="font-semibold text-slate-400">English:</span> {item.exampleBanglish}
+                    </p>
+                    <p className="text-[11px] text-slate-700 font-bangla">
+                      <span className="font-semibold text-emerald-800">অর্থ:</span> {item.exampleBangla}
                     </p>
                   </div>
                 )}

@@ -3,6 +3,7 @@ import { Volume2, BookOpen, Search, Sparkles, Filter } from 'lucide-react';
 import { MALAYALAM_ALPHABET } from '../data/malayalam/alphabet';
 import { AudioButton } from '../components/AudioButton';
 import { VoiceSettings } from '../types';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface AlphabetPageProps {
   voiceSettings: VoiceSettings;
@@ -58,10 +59,15 @@ export const AlphabetPage: React.FC<AlphabetPageProps> = ({ voiceSettings }) => 
                   [{selectedLetter.sound}]
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold font-bangla">
-                উচ্চারণ: {selectedLetter.banglish}
-              </h3>
-              <p className="text-xs sm:text-sm text-emerald-100 max-w-lg leading-relaxed">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="bg-emerald-500/30 text-emerald-100 px-2.5 py-1 rounded-xl text-xs font-bold font-bangla">
+                  🇧🇩 বাংলা উচ্চারণ: {selectedLetter.banglaExplanation.split(' ')[0] || selectedLetter.sound}
+                </span>
+                <span className="bg-white/10 text-emerald-200 px-2.5 py-1 rounded-xl text-xs font-mono">
+                  🔤 English: {selectedLetter.banglish}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-emerald-100 max-w-lg leading-relaxed pt-1">
                 {selectedLetter.banglaExplanation}
               </p>
             </div>
@@ -69,14 +75,17 @@ export const AlphabetPage: React.FC<AlphabetPageProps> = ({ voiceSettings }) => 
 
           {/* Example and Listen */}
           <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 flex items-center gap-4 shrink-0 w-full md:w-auto justify-between md:justify-start">
-            <div>
+            <div className="space-y-0.5">
               <span className="text-[10px] text-emerald-200 uppercase tracking-wider block">
-                উদাহরণ শব্দ
+                উদাহরণ শব্দ ও উচ্চারণ
               </span>
               <span className="text-lg font-bold font-malayalam block">
                 {selectedLetter.exampleWord}
               </span>
-              <span className="text-xs text-emerald-200">
+              <span className="text-xs text-emerald-100 font-bangla block">
+                বাংলা: {getMalayalamBanglaPronunciation(selectedLetter.exampleWord)}
+              </span>
+              <span className="text-[11px] text-emerald-200 block">
                 {selectedLetter.exampleBanglish} ({selectedLetter.exampleBangla})
               </span>
             </div>
@@ -85,7 +94,7 @@ export const AlphabetPage: React.FC<AlphabetPageProps> = ({ voiceSettings }) => 
               locale="ml-IN"
               settings={voiceSettings}
               size="lg"
-              className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 shadow-md"
+              className="bg-emerald-400 text-slate-950 hover:bg-emerald-300 shadow-md shrink-0"
             />
           </div>
         </div>
@@ -147,10 +156,13 @@ export const AlphabetPage: React.FC<AlphabetPageProps> = ({ voiceSettings }) => 
                 <span className="text-3xl font-extrabold font-malayalam block text-slate-900 group-hover:text-emerald-700 transition-colors">
                   {item.letter}
                 </span>
-                <span className="text-xs font-semibold text-emerald-800 block mt-1">
-                  {item.banglish}
+                <span className="text-xs font-bold text-emerald-800 font-bangla block mt-1">
+                  🇧🇩 {item.banglaExplanation.split(' ')[0]}
                 </span>
-                <span className="text-[11px] text-slate-500 block truncate mt-0.5">
+                <span className="text-[11px] font-mono text-slate-500 block">
+                  🔤 {item.banglish}
+                </span>
+                <span className="text-[10px] text-slate-400 block truncate mt-1">
                   {item.exampleWord} ({item.exampleBangla})
                 </span>
               </div>

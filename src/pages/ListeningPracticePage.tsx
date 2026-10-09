@@ -12,6 +12,7 @@ import confetti from 'canvas-confetti';
 import { LanguageMetadata, VoiceSettings } from '../types';
 import { getSentencesForLanguage } from '../data';
 import { AudioButton } from '../components/AudioButton';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface ListeningPracticePageProps {
   language: LanguageMetadata;
@@ -190,11 +191,17 @@ export const ListeningPracticePage: React.FC<ListeningPracticePageProps> = ({
                 </>
               )}
             </div>
-            <p className="font-bangla leading-relaxed">
-              মূল বাক্য: <span className="font-bold font-malayalam">{currentSentence.target}</span> (উচ্চারণ: {currentSentence.banglish})
-              <br />
-              সঠিক বাংলা অর্থ: <span className="font-bold">{currentSentence.bangla}</span>
-            </p>
+            <div className="font-bangla leading-relaxed space-y-1">
+              <p>
+                মূল বাক্য: <span className="font-bold font-malayalam text-base">{currentSentence.target}</span>
+              </p>
+              <p className="text-xs">
+                🇧🇩 বাংলা উচ্চারণ: <span className="font-extrabold text-emerald-900">{currentSentence.banglaPronunciation || getMalayalamBanglaPronunciation(currentSentence.target)}</span> | 🔤 English: <span className="font-mono">{currentSentence.banglish}</span>
+              </p>
+              <p>
+                💡 সঠিক বাংলা অর্থ: <span className="font-bold">{currentSentence.bangla}</span>
+              </p>
+            </div>
           </div>
         )}
 

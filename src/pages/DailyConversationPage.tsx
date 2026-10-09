@@ -4,6 +4,7 @@ import { LanguageMetadata, UserProgress, VoiceSettings, SentenceItem } from '../
 import { getSentencesForLanguage } from '../data';
 import { AudioButton } from '../components/AudioButton';
 import { WordByWordSentence } from '../components/WordByWordModal';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface DailyConversationPageProps {
   language: LanguageMetadata;
@@ -67,18 +68,26 @@ export const DailyConversationPage: React.FC<DailyConversationPageProps> = ({
               key={item.id}
               className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:border-emerald-300 transition-all space-y-3"
             >
-              {/* Header: Roman pronunciation & Controls */}
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-md bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <span className="text-xs text-slate-600 font-sans">
-                    উচ্চারণ: <span className="font-semibold text-slate-800">{item.banglish}</span>
-                  </span>
+              {/* Header: Roman & Bangla pronunciation & Controls */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <span className="text-xs font-bold text-slate-800 font-bangla">
+                      🇧🇩 বাংলা উচ্চারণ:{' '}
+                      <span className="text-emerald-900 font-extrabold">
+                        {item.banglaPronunciation || getMalayalamBanglaPronunciation(item.target)}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500 font-mono ml-8">
+                    🔤 English: <span className="font-semibold text-slate-700">{item.banglish}</span>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   <button
                     type="button"
                     onClick={() => onToggleFavorite(item.id)}

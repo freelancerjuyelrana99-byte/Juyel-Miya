@@ -15,6 +15,7 @@ import {
 import { LanguageMetadata, VoiceSettings, ConversationScenario } from '../types';
 import { getConversationsForLanguage } from '../data';
 import { AudioButton } from '../components/AudioButton';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface RoleplayPageProps {
   language: LanguageMetadata;
@@ -138,11 +139,19 @@ export const RoleplayPage: React.FC<RoleplayPageProps> = ({
                   <p className="text-base sm:text-lg font-bold text-slate-900 font-malayalam leading-relaxed">
                     {line.text}
                   </p>
-                  <p className="text-xs text-slate-600 font-mono mt-0.5">
-                    উচ্চারণ: {line.banglish}
-                  </p>
+                  <div className="space-y-0.5 mt-1 bg-white/70 p-2 rounded-xl border border-slate-200/80">
+                    <p className="text-xs font-bold text-slate-800 font-bangla">
+                      🇧🇩 বাংলা উচ্চারণ:{' '}
+                      <span className="text-emerald-900 font-extrabold">
+                        {line.banglaPronunciation || getMalayalamBanglaPronunciation(line.text)}
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-slate-600 font-mono">
+                      🔤 English: {line.banglish}
+                    </p>
+                  </div>
                   <p className="text-xs sm:text-sm font-semibold text-emerald-800 font-bangla mt-1.5">
-                    বাংলা অর্থ: {line.bangla}
+                    💡 বাংলা অর্থ: {line.bangla}
                   </p>
                 </div>
               );

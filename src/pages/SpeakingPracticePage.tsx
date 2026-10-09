@@ -21,6 +21,7 @@ import {
   startSpeechRecognition,
 } from '../services/speechService';
 import { AudioButton } from '../components/AudioButton';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface SpeakingPracticePageProps {
   language: LanguageMetadata;
@@ -151,11 +152,19 @@ export const SpeakingPracticePage: React.FC<SpeakingPracticePageProps> = ({
           <span className="text-2xl sm:text-3xl font-bold font-malayalam text-slate-900 block leading-relaxed">
             {currentSentence.target}
           </span>
-          <span className="text-sm text-slate-600 font-sans block">
-            উচ্চারণ: <span className="font-semibold text-slate-800">{currentSentence.banglish}</span>
-          </span>
+          <div className="bg-white p-2.5 rounded-xl border border-slate-200 inline-block max-w-md mx-auto space-y-1">
+            <span className="text-xs font-bold text-slate-800 font-bangla block">
+              🇧🇩 বাংলা উচ্চারণ:{' '}
+              <span className="text-emerald-900 font-extrabold text-sm">
+                {currentSentence.banglaPronunciation || getMalayalamBanglaPronunciation(currentSentence.target)}
+              </span>
+            </span>
+            <span className="text-xs font-mono text-slate-500 block">
+              🔤 English: {currentSentence.banglish}
+            </span>
+          </div>
           <p className="text-sm font-semibold text-emerald-800 font-bangla pt-1">
-            অর্থ: {currentSentence.bangla}
+            💡 বাংলা অর্থ: {currentSentence.bangla}
           </p>
 
           {/* Audio Listen Buttons */}

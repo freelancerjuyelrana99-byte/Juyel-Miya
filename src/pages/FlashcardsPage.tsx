@@ -14,6 +14,7 @@ import confetti from 'canvas-confetti';
 import { LanguageMetadata, UserProgress, VoiceSettings } from '../types';
 import { getVocabularyForLanguage } from '../data';
 import { AudioButton } from '../components/AudioButton';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface FlashcardsPageProps {
   language: LanguageMetadata;
@@ -156,20 +157,32 @@ export const FlashcardsPage: React.FC<FlashcardsPageProps> = ({
             ) : (
               // BACK
               <div className="space-y-3 animate-fadeIn">
-                <span className="text-sm font-mono text-slate-500 block">
-                  উচ্চারণ: {currentItem.banglish}
-                </span>
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 inline-block text-left mx-auto max-w-sm space-y-1">
+                  <p className="text-xs font-bold text-slate-800 font-bangla">
+                    🇧🇩 বাংলা উচ্চারণ:{' '}
+                    <span className="text-emerald-900 font-extrabold text-sm">
+                      {currentItem.banglaPronunciation || getMalayalamBanglaPronunciation(currentItem.word)}
+                    </span>
+                  </p>
+                  <p className="text-[11px] font-mono text-slate-600">
+                    🔤 English: {currentItem.banglish}
+                  </p>
+                </div>
+
                 <span className="text-2xl sm:text-3xl font-extrabold font-bangla text-emerald-900 block">
-                  {currentItem.bangla}
+                  💡 {currentItem.bangla}
                 </span>
 
                 {currentItem.exampleSentence && (
-                  <div className="pt-2 text-xs text-slate-600 max-w-sm mx-auto">
-                    <p className="font-semibold text-slate-800 font-malayalam">
+                  <div className="pt-2 text-xs text-slate-600 max-w-sm mx-auto bg-emerald-50/50 p-2 rounded-xl">
+                    <p className="font-bold text-slate-800 font-malayalam">
                       {currentItem.exampleSentence}
                     </p>
-                    <p className="text-slate-500 font-bangla mt-0.5">
-                      {currentItem.exampleBangla}
+                    <p className="text-[11px] text-emerald-950 font-bangla mt-0.5">
+                      উচ্চারণ: {getMalayalamBanglaPronunciation(currentItem.exampleSentence)}
+                    </p>
+                    <p className="text-slate-600 font-bangla mt-0.5 font-medium">
+                      অর্থ: {currentItem.exampleBangla}
                     </p>
                   </div>
                 )}

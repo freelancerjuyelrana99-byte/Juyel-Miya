@@ -1,7 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, X, Sparkles, Volume2, HelpCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Bot,
+  Send,
+  X,
+  Sparkles,
+  Volume2,
+  Mic,
+  MicOff,
+  Copy,
+  Check,
+  Radio,
+  ExternalLink,
+} from 'lucide-react';
 import { LanguageMetadata } from '../types';
 import { AudioButton } from './AudioButton';
+import { translateBanglaToKerala } from '../services/keralaBotService';
+import { startSpeechRecognition, stopSpeaking, RecognitionSession } from '../services/speechService';
+import { getMalayalamBanglaPronunciation } from '../utils/malayalamTransliteration';
 
 interface Message {
   id: string;
@@ -9,24 +24,33 @@ interface Message {
   text: string;
   targetScript?: string;
   banglish?: string;
+  banglaPronunciation?: string;
   audioLocale?: string;
+  tip?: string;
 }
 
 interface AITutorModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: LanguageMetadata;
+  onOpenFullChatbot?: () => void;
 }
 
 export const AITutorModal: React.FC<AITutorModalProps> = ({
   isOpen,
   onClose,
   language,
+  onOpenFullChatbot,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [listeningInterim, setListeningInterim] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionSessionRef = useRef<RecognitionSession | null>(null);
 
   // Initialize tutor message
   useEffect(() => {
@@ -35,196 +59,271 @@ export const AITutorModal: React.FC<AITutorModalProps> = ({
         {
           id: 'welcome',
           sender: 'tutor',
-          text: `নমস্কার! আমি LingoBangla-র স্মার্ট টিউটর। আপনি বাংলা ভাষায় যেকোনো প্রশ্ন করতে পারেন (যেমন: ‘কেরালাতে চা কীভাবে চাইব?’, ‘আমি কাজে যাচ্ছি মালয়ালমে কী হবে?’, বা ব্যাকরণ নিয়ে সাহায্য)।`,
+          text: `নমস্কার! আমি LingoBangla-র কেরালা ভয়েজ সহকারী। আপনি বাংলায় যেকোনো কথা বলতে পারেন (যেমন: ‘চা চাই’, ‘কাজে যাব’, ‘দাম কত?’ বা ‘কেমন আছেন?’)। আমি মালয়ালমে অনুবাদ করব, সাথে বাংলা ও ইংরেজি উচ্চারণ এবং অডিও ভয়েজ থাকবে!`,
           targetScript: language.id === 'malayalam' ? 'സ്വാഗതം! എന്ത് സഹായിക്കണം?' : 'Welcome!',
           banglish: language.id === 'malayalam' ? 'Swaagatham! Enthu sahaayikkanam?' : 'Welcome!',
+          banglaPronunciation: language.id === 'malayalam' ? 'স্বাগতং! এন্তু সহায়িক্কণম্?' : 'ওয়েলকাম!',
           audioLocale: language.voiceCode,
         },
       ]);
     }
-  }, [isOpen, language]);
+  }, [isOpen, language, messages.length]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages, isTyping, listeningInterim]);
+
+  useEffect(() => {
+    return () => {
+      if (recognitionSessionRef.current) {
+        recognitionSessionRef.current.stop();
+      }
+      stopSpeaking();
+    };
+  }, []);
 
   if (!isOpen) return null;
 
-  const getSmartOfflineResponse = (query: string): Message => {
-    const q = query.toLowerCase();
+  const handleSend = (textToSend?: string) => {
+    const query = (textToSend || inputValue).trim();
+    if (!query) return;
 
-    if (q.includes('চা') || q.includes('tea') || q.includes('chaaya')) {
-      return {
-        id: Date.now().toString(),
-        sender: 'tutor',
-        text: 'কেরালার দোকানে চা চাইতে বলবেন: "ചേട്ടാ, ഒരു ചായ തരൂ" (Chetta, oru chaaya tharoo)। কড়া লিকার চাইলে বলবেন "കടുപ്പമുള്ള ചായ" (Kaduppamulla chaaya)।',
-        targetScript: 'ചേട്ടാ, ഒരു ചായ തരൂ',
-        banglish: 'Chetta, oru chaaya tharoo',
-        audioLocale: language.voiceCode,
-      };
+    if (isListening && recognitionSessionRef.current) {
+      recognitionSessionRef.current.stop();
+      setIsListening(false);
     }
-
-    if (q.includes('নাম') || q.includes('name') || q.includes('peru')) {
-      return {
-        id: Date.now().toString(),
-        sender: 'tutor',
-        text: 'কারও নাম জিজ্ঞেস করতে বলবেন: "നിങ്ങളുടെ പേര് എന്താണ്?" (Ningalude peru enthaanu?)। আর নিজের নাম বলতে: "എന്റെ പേര്..." (Ente peru...)।',
-        targetScript: 'നിങ്ങളുടെ പേര് എന്താണ്?',
-        banglish: 'Ningalude peru enthaanu?',
-        audioLocale: language.voiceCode,
-      };
-    }
-
-    if (q.includes('পানি') || q.includes('জল') || q.includes('water') || q.includes('vellam')) {
-      return {
-        id: Date.now().toString(),
-        sender: 'tutor',
-        text: 'মালয়ালমে পানিকে বলে "വെള്ളം" (Vellam)। পানি চাইতে বলবেন: "കുറച്ച് വെള്ളം തരൂ" (Kurachu vellam tharoo)। কেরালাতে হালকা গরম পিংক পানিও পাওয়া যায় যাকে "ജീരകവെള്ളം" (Jeeraka vellam) বলে!',
-        targetScript: 'കുറച്ച് വെള്ളം തരൂ',
-        banglish: 'Kurachu vellam tharoo',
-        audioLocale: language.voiceCode,
-      };
-    }
-
-    if (q.includes('দাম') || q.includes('কত') || q.includes('price') || q.includes('cost')) {
-      return {
-        id: Date.now().toString(),
-        sender: 'tutor',
-        text: 'দোকানে দাম জানতে বলবেন: "ഇതിന് എത്രയാണ് വില?" (Ithinu ethrayaanu vila?)। যদি কিছুটা কমাতে চান: "കുറച്ച് തരുമോ?" (Kurachu tharumo?)।',
-        targetScript: 'ഇതിന് എത്രയാണ് വില?',
-        banglish: 'Ithinu ethrayaanu vila?',
-        audioLocale: language.voiceCode,
-      };
-    }
-
-    if (q.includes('ধন্যবাদ') || q.includes('thank') || q.includes('nandi')) {
-      return {
-        id: Date.now().toString(),
-        sender: 'tutor',
-        text: 'মালয়ালমে ধন্যবাদ হলো "നന്ദി" (Nandi)। অনেক বেশি ধন্যবাদ জানাতে বলবেন: "വളരെ നന്ദി" (Valare nandi)।',
-        targetScript: 'വളരെ നന്ദി',
-        banglish: 'Valare nandi',
-        audioLocale: language.voiceCode,
-      };
-    }
-
-    if (q.includes('কাজ') || q.includes('চাকরি') || q.includes('work') || q.includes('joli')) {
-      return {
-        id: Date.now().toString(),
-        sender: 'tutor',
-        text: 'কাজের মালয়ালম শব্দ হলো "ജോലി" (Joli)। "আমি কাজে যাচ্ছি" বলতে বলবেন: "ഞാൻ ജോലിക്ക് പോകുന്നു" (Njaan jolikku pokunnu)। মালিক বা সর্দারকে বলা হয় "മുതലാളി" (Muthalaali)।',
-        targetScript: 'ഞാൻ ജോലിക്ക് പോകുന്നു',
-        banglish: 'Njaan jolikku pokunnu',
-        audioLocale: language.voiceCode,
-      };
-    }
-
-    // Default intelligent tutoring response
-    return {
-      id: Date.now().toString(),
-      sender: 'tutor',
-      text: `খুব চমৎকার প্রশ্ন! "${query}" সম্পর্কে মালয়ালম ভাষায় প্রাত্যহিক ব্যবহারের জন্য সহজ বাক্যটি হলো: "ശരി, നമുക്ക് സംസാരിക്കാം" (ঠিক আছে, চলুন কথা বলি)। মনে রাখবেন, সবসময় বড়দের ক্ষেত্রে 'നിങ്ങൾ' (Ningal) ও '-oo' ভদ্র রূপ ব্যবহার করবেন।`,
-      targetScript: 'ശരി, നമുക്ക് സംസാരിക്കാം',
-      banglish: 'Shari, namukku samsaarikaam',
-      audioLocale: language.voiceCode,
-    };
-  };
-
-  const handleSend = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputValue.trim()) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: inputValue.trim(),
+      text: query,
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    const currentInput = inputValue;
     setInputValue('');
+    setListeningInterim('');
     setIsTyping(true);
 
     setTimeout(() => {
-      const response = getSmartOfflineResponse(currentInput);
-      setMessages((prev) => [...prev, response]);
+      if (language.id === 'malayalam') {
+        const result = translateBanglaToKerala(query);
+        const botResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: 'tutor',
+          text: result.banglaMeaning,
+          targetScript: result.malayalam,
+          banglish: result.englishPronunciation,
+          banglaPronunciation: result.banglaPronunciation,
+          audioLocale: 'ml-IN',
+          tip: result.tip,
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      } else {
+        const botResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: 'tutor',
+          text: `"${query}" এর জন্য সুন্দর উত্তর:`,
+          targetScript: language.greetingExample.target,
+          banglish: language.greetingExample.banglish,
+          banglaPronunciation: getMalayalamBanglaPronunciation(language.greetingExample.target),
+          audioLocale: language.voiceCode,
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      }
       setIsTyping(false);
     }, 450);
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      if (recognitionSessionRef.current) {
+        recognitionSessionRef.current.stop();
+      }
+      setIsListening(false);
+      setListeningInterim('');
+      return;
+    }
+
+    stopSpeaking();
+    setListeningInterim('শুনছি... বাংলায় বলুন...');
+    setIsListening(true);
+
+    const session = startSpeechRecognition(
+      'bn-BD',
+      (transcript, isFinal) => {
+        setListeningInterim(transcript);
+        if (isFinal && transcript.trim()) {
+          setIsListening(false);
+          handleSend(transcript.trim());
+        }
+      },
+      (error) => {
+        console.warn('Voice rec notice:', error);
+        setIsListening(false);
+        setListeningInterim('');
+      },
+      () => {
+        setIsListening(false);
+      }
+    );
+
+    recognitionSessionRef.current = session;
+  };
+
+  const copyText = (txt: string, id: string) => {
+    navigator.clipboard.writeText(txt);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const samplePrompts = [
     'দোকানে চা কীভাবে চাইব?',
     'পানির জন্য মালয়ালমে কী বলব?',
-    'দাম জিজ্ঞেস করার সঠিক বাক্য কী?',
-    'আমি কাজে যাচ্ছি মালয়ালমে কী হবে?',
+    'দাম কত জিজ্ঞেস করার বাক্য',
+    'আমি কাজে যাচ্ছি মালয়ালমে কী?',
+    'কেমন আছেন?',
+    'আমার বেতন দিন',
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-lg w-full h-[85vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white rounded-3xl max-w-xl w-full h-[88vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-emerald-800 to-teal-800 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shadow-xs">
+              <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-base">স্মার্ট এআই টিউটর</h3>
-                <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-medium">
-                  অফলাইন-রেডি
+                <h3 className="font-bold text-base">কেরালা ভয়েজ সহকারী</h3>
+                <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-semibold">
+                  বাংলা ➔ মালয়ালম
                 </span>
               </div>
-              <p className="text-xs text-emerald-100">
-                {language.banglaName} শেখার ব্যক্তিগত সহায়িকা
+              <p className="text-xs text-emerald-100 font-bangla">
+                বাংলায় বলুন বা লিখুন — মালয়ালমে অনুবাদ ও ভয়েজে বলবে
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {onOpenFullChatbot && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenFullChatbot();
+                }}
+                className="hidden sm:flex items-center gap-1 text-xs bg-white/10 hover:bg-white/20 text-white px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+                title="পূর্ণাঙ্গ চ্যাটবট পেজ খুলুন"
+              >
+                <span>বড় স্ক্রিন</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white/80 hover:text-white p-1.5 rounded-xl hover:bg-white/10 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Message Feed */}
-        <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/50">
+        <div ref={scrollRef} className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-4 bg-slate-50/50">
           {messages.map((m) => (
             <div
               key={m.id}
               className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                className={`max-w-[90%] rounded-2xl p-4 text-sm leading-relaxed ${
                   m.sender === 'user'
-                    ? 'bg-emerald-600 text-white rounded-br-xs shadow-xs'
-                    : 'bg-white text-slate-800 rounded-bl-xs border border-slate-200/80 shadow-xs'
+                    ? 'bg-emerald-700 text-white rounded-tr-xs shadow-xs'
+                    : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200/90 shadow-xs'
                 }`}
               >
-                <p className="whitespace-pre-line">{m.text}</p>
+                {/* Header tag */}
+                <div className="text-[11px] font-bold opacity-75 mb-1.5 flex items-center justify-between">
+                  <span>{m.sender === 'user' ? 'আপনি (বাংলা)' : 'কেরালা সহকারী'}</span>
+                  {m.targetScript && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyText(
+                          `${m.targetScript}\nবাংলা উচ্চারণ: ${m.banglaPronunciation || ''}\nইংরেজি: ${m.banglish || ''}`,
+                          m.id
+                        )
+                      }
+                      className="text-slate-400 hover:text-emerald-700 cursor-pointer inline-flex items-center gap-0.5"
+                    >
+                      {copiedId === m.id ? (
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                <p className="whitespace-pre-line font-bangla font-medium">{m.text}</p>
 
                 {m.targetScript && (
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50/80 p-2 rounded-xl">
-                    <div>
-                      <p className="font-semibold text-emerald-950 font-malayalam text-base">
-                        {m.targetScript}
-                      </p>
-                      {m.banglish && (
-                        <p className="text-xs text-slate-500 font-sans mt-0.5">
-                          উচ্চারণ: {m.banglish}
+                  <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5 bg-slate-50/80 p-3 rounded-2xl">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                          🌴 মালয়ালম লিপি:
+                        </span>
+                        <p className="font-black text-emerald-950 font-malayalam text-xl mt-0.5">
+                          {m.targetScript}
                         </p>
+                      </div>
+                      {m.audioLocale && (
+                        <AudioButton
+                          text={m.targetScript}
+                          locale={m.audioLocale}
+                          size="sm"
+                          className="bg-emerald-700 text-white shrink-0"
+                        />
                       )}
                     </div>
-                    {m.audioLocale && (
-                      <AudioButton
-                        text={m.targetScript}
-                        locale={m.audioLocale}
-                        size="sm"
-                      />
+
+                    {/* Both Bangla and English Pronunciations */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                      {m.banglaPronunciation && (
+                        <div className="bg-white p-2 rounded-xl border border-slate-200">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                            🇧🇩 বাংলা উচ্চারণ:
+                          </span>
+                          <p className="font-bold text-slate-900 font-bangla mt-0.5">
+                            {m.banglaPronunciation}
+                          </p>
+                        </div>
+                      )}
+
+                      {m.banglish && (
+                        <div className="bg-white p-2 rounded-xl border border-slate-200">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                            🔤 ইংরেজি উচ্চারণ:
+                          </span>
+                          <p className="font-medium text-slate-700 font-mono mt-0.5">
+                            {m.banglish}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {m.tip && (
+                      <p className="text-[11px] text-amber-900 bg-amber-50 p-2 rounded-xl border border-amber-200/70">
+                        💡 {m.tip}
+                      </p>
                     )}
                   </div>
                 )}
@@ -234,11 +333,20 @@ export const AITutorModal: React.FC<AITutorModalProps> = ({
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-xs text-slate-500 rounded-bl-xs flex items-center gap-1.5 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" />
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.15s]" />
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.3s]" />
-                <span className="ml-1 text-slate-400">টিউটর লিখছেন...</span>
+              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-xs text-slate-500 rounded-tl-xs flex items-center gap-1.5 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" />
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.15s]" />
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.3s]" />
+                <span className="ml-1 text-slate-600">মালয়ালমে অনুবাদ হচ্ছে...</span>
+              </div>
+            </div>
+          )}
+
+          {isListening && (
+            <div className="flex justify-center">
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl px-4 py-2 text-xs flex items-center gap-2 shadow-sm animate-pulse">
+                <Radio className="w-4 h-4 text-rose-600 animate-spin" />
+                <span className="font-semibold">{listeningInterim || 'শুনছি... বাংলায় বলুন...'}</span>
               </div>
             </div>
           )}
@@ -250,10 +358,8 @@ export const AITutorModal: React.FC<AITutorModalProps> = ({
             <button
               key={prompt}
               type="button"
-              onClick={() => {
-                setInputValue(prompt);
-              }}
-              className="text-xs whitespace-nowrap px-3 py-1 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 rounded-full transition-colors cursor-pointer shrink-0"
+              onClick={() => handleSend(prompt)}
+              className="text-xs whitespace-nowrap px-3 py-1 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 rounded-full transition-colors cursor-pointer shrink-0 font-bangla"
             >
               {prompt}
             </button>
@@ -261,14 +367,35 @@ export const AITutorModal: React.FC<AITutorModalProps> = ({
         </div>
 
         {/* Input Bar */}
-        <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-200 flex gap-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSend();
+          }}
+          className="p-3 bg-white border-t border-slate-200 flex items-center gap-2"
+        >
+          {/* Mic Button for speaking in Bangla */}
+          <button
+            type="button"
+            onClick={toggleListening}
+            className={`p-2.5 rounded-xl flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+              isListening
+                ? 'bg-rose-600 text-white animate-pulse ring-2 ring-rose-300'
+                : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
+            }`}
+            title="মাইক চেপে বাংলায় কথা বলুন"
+          >
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="বাংলায় যেকোনো প্রশ্ন লিখুন (যেমন: চা কীভাবে চাইব?)..."
-            className="flex-1 text-sm px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"
+            placeholder="বাংলায় বলুন বা লিখুন (যেমন: চা দেন, কেমন আছেন)..."
+            className="flex-1 text-sm px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-slate-50/50 font-bangla"
           />
+
           <button
             type="submit"
             disabled={!inputValue.trim()}

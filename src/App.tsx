@@ -56,19 +56,23 @@ export default function App() {
 
   // Listen to Firebase Auth state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        try {
-          const synced = await syncUserData(user, progress);
-          setProgress(synced);
-          saveUserProgress(synced);
-        } catch (e) {
-          console.error('Error syncing user data on sign in:', e);
+    try {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setCurrentUser(user);
+        if (user) {
+          try {
+            const synced = await syncUserData(user, progress);
+            setProgress(synced);
+            saveUserProgress(synced);
+          } catch (e) {
+            console.error('Error syncing user data on sign in:', e);
+          }
         }
-      }
-    });
-    return () => unsubscribe();
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase auth listener failed to initialize:', err);
+    }
   }, []);
 
   const currentLanguage: LanguageMetadata = getLanguageById(progress.selectedLanguage || 'malayalam');

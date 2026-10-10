@@ -12,6 +12,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      // Ensure trailing slash on GitHub Pages so relative bundles resolve correctly
+      (function() {
+        if (window.location.hostname.endsWith('github.io')) {
+          var path = window.location.pathname;
+          if (!path.endsWith('/') && !path.split('/').pop().includes('.')) {
+            window.location.replace(window.location.protocol + '//' + window.location.host + path + '/' + window.location.search + window.location.hash);
+          }
+        }
+      })();
+    </script>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-teal-500 selection:text-white">
     <div id="root"></div>

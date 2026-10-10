@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LingoBangla</title>
+    <script>
+      // Single Page Application redirect for GitHub Pages
+      (function() {
+        var path = window.location.pathname;
+        // If not at root, redirect to root
+        var repoName = path.split('/')[1] || '';
+        if (window.location.hostname.endsWith('github.io') && repoName) {
+          window.location.replace('/' + repoName + '/');
+        } else {
+          window.location.replace('/');
+        }
+      })();
+    </script>
+  </head>
+  <body style="font-family: sans-serif; text-align: center; padding: 40px; background: #f8fafc;">
+    <h2>LingoBangla লোড হচ্ছে...</h2>
+    <p>অনুগ্রহ করে অপেক্ষা করুন অথবা <a href="./">এখানে ক্লিক করুন</a>।</p>
+  </body>
+</html>
